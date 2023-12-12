@@ -183,7 +183,7 @@ def get_stock_holdings(accid,symbol = None):
         "持仓数量":obj.m_nVolume,
         "持仓成本":obj.m_dOpenPrice,
         "浮动盈亏":obj.m_dFloatProfit,
-        "盈亏比例":obj.m_dProfitRate,
+        "盈亏比例":obj.m_dProfitRate * 100,
         "市值":obj.m_dMarketValue,
         "可用余额":obj.m_nCanUseVolume,
         "交易方向":obj.m_nDirection
