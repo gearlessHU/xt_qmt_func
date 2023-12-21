@@ -1142,3 +1142,31 @@ def get_option_code(market,data_type = 0):
             _list.append(i)
     # _list =[i for i in all_list if re.match(pattern, i)]
     return _list
+
+
+
+def my_download(stock_list,period,start_date = '', end_date = ''):
+	'''
+	用于显示下载进度
+	'''
+	if "d" in period:
+		period = "1d"
+	elif "m" in period:
+		if int(period[0]) < 5:
+			period = "1m"
+		else:
+			period = "5m"
+	elif "tick" == period:
+		pass
+	else:
+		raise KeyboardInterrupt("周期传入错误")
+
+
+	n = 1
+	num = len(stock_list)
+	for i in stock_list:
+		print(f"当前正在下载{n}/{num}")
+		
+		download_history_data(i,period,start_date, end_date)
+		n += 1
+	print("下载任务结束")
