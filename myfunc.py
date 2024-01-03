@@ -27,7 +27,7 @@ logging.basicConfig(
 
 
 # --------------------股票版本------------------------------
-def my_passorder(C,stock,opentype,lots,price = None,m_strRemark = '系统备注'):
+def my_passorder(C,stock:str,opentype:str,lots:int,price = None,m_strRemark = '系统备注'):
     '''
     
     Args:
