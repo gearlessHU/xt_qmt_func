@@ -12,7 +12,8 @@ import pickle
 from typing import Union, List, Any, Optional, Coroutine, Callable, Tuple, Dict
 import logging
 from collections import deque
-
+import json
+import requests
 
 # --------------------log记录程序---------------------------
 log_file_path = ""
@@ -1037,32 +1038,22 @@ def get_resid(s1,s2):
     else:
         return pd.Series(np.nan,index=s1.index)
     
-def get_all_symbol_dict() -> dict:
+def get_all_symbol_dict(all_code_list) -> list:
     """
-    ToDo : 获得当前所有在市的期货代码
+    ToDo : 筛选出list里的期货代码
 
-    return: 形式是 -> {symbol_name1:[future_code1,future_code2],symbol_name2:[....]}
+    return: list
 
     """
-    all_code_list = xtdata.get_stock_list_in_sector("全部期货")
     s_dict = {}
     future_list = []
+    pattern = r'^[a-zA-Z]{1,2}\d{3,4}\.[A-Z]{2}$'
     # s_dict = {re.findall(r"[a-zA-Z]+",i.split(".")[0])[0] : [] for i in future_list}
     for i in all_code_list:
         
-        if "&" in i:
-            continue
-        if len(re.findall(r"\d+",i)[0]) <= 2:
-            continue
-        if re.findall(r"\d+",i)[0] == "00":
-            continue
-        if "_" in i:
-            continue
-        future_list.append(i)
-        s_dict[re.findall(r"[a-zA-Z]+",i.split(".")[0])[0]] = []
-    for i in future_list:
-        s_dict[re.findall(r"[a-zA-Z]+",i.split(".")[0])[0]].append(i)
-    return s_dict
+        if re.match(pattern,i):
+            future_list.append(i)
+    return future_list
 
 def get_option_code(market,data_type = 0):
 
@@ -1142,3 +1133,22 @@ def get_option_code(market,data_type = 0):
             _list.append(i)
     # _list =[i for i in all_list if re.match(pattern, i)]
     return _list
+
+
+
+# url='https://open.feishu.cn/open-apis/bot/v2/hook/11385e95-ec73-4bcb-94c8-3adfdc0fd94f'
+def send_feishu_msg(url,msg):
+    """
+    Todo: 给飞书机器人发消息
+    Arge:
+        url:机器人的url
+        msg:信息内容
+    """
+    headers = {
+    'Content-Type': 'application/json'
+    }
+    data = {"msg_type": "text","content": {"text":msg}
+    }
+    post_data = json.dumps(data)
+    res = requests.post(url=url, data=post_data, headers=headers)
+
