@@ -12,7 +12,8 @@ import pickle
 from typing import Union, List, Any, Optional, Coroutine, Callable, Tuple, Dict
 import logging
 from collections import deque
-
+import json
+import requests
 
 # --------------------log记录程序---------------------------
 log_file_path = ""
@@ -27,7 +28,7 @@ logging.basicConfig(
 
 
 # --------------------股票版本------------------------------
-def my_passorder(C,stock:str,opentype:str,lots:int,price = None,m_strRemark = '系统备注'):
+def my_passorder(C,stock,opentype,lots,price = None,m_strRemark = '系统备注'):
     '''
     
     Args:
@@ -183,7 +184,7 @@ def get_stock_holdings(accid,symbol = None):
         "持仓数量":obj.m_nVolume,
         "持仓成本":obj.m_dOpenPrice,
         "浮动盈亏":obj.m_dFloatProfit,
-        "盈亏比例":obj.m_dProfitRate * 100,
+        "盈亏比例":obj.m_dProfitRate,
         "市值":obj.m_dMarketValue,
         "可用余额":obj.m_nCanUseVolume,
         "交易方向":obj.m_nDirection
@@ -1037,32 +1038,22 @@ def get_resid(s1,s2):
     else:
         return pd.Series(np.nan,index=s1.index)
     
-def get_all_symbol_dict() -> dict:
+def get_all_symbol_code(all_code_list) -> list:
     """
-    ToDo : 获得当前所有在市的期货代码
+    ToDo : 筛选出list里的期货代码
 
-    return: 形式是 -> {symbol_name1:[future_code1,future_code2],symbol_name2:[....]}
+    return: list
 
     """
-    all_code_list = xtdata.get_stock_list_in_sector("全部期货")
     s_dict = {}
     future_list = []
+    pattern = r'^[a-zA-Z]{1,2}\d{3,4}\.[A-Z]{2}$'
     # s_dict = {re.findall(r"[a-zA-Z]+",i.split(".")[0])[0] : [] for i in future_list}
     for i in all_code_list:
         
-        if "&" in i:
-            continue
-        if len(re.findall(r"\d+",i)[0]) <= 2:
-            continue
-        if re.findall(r"\d+",i)[0] == "00":
-            continue
-        if "_" in i:
-            continue
-        future_list.append(i)
-        s_dict[re.findall(r"[a-zA-Z]+",i.split(".")[0])[0]] = []
-    for i in future_list:
-        s_dict[re.findall(r"[a-zA-Z]+",i.split(".")[0])[0]].append(i)
-    return s_dict
+        if re.match(pattern,i):
+            future_list.append(i)
+    return future_list
 
 def get_option_code(market,data_type = 0):
 
@@ -1145,28 +1136,19 @@ def get_option_code(market,data_type = 0):
 
 
 
-def my_download(stock_list,period,start_date = '', end_date = ''):
-	'''
-	用于显示下载进度
-	'''
-	if "d" in period:
-		period = "1d"
-	elif "m" in period:
-		if int(period[0]) < 5:
-			period = "1m"
-		else:
-			period = "5m"
-	elif "tick" == period:
-		pass
-	else:
-		raise KeyboardInterrupt("周期传入错误")
+# url='https://open.feishu.cn/open-apis/bot/v2/hook/11385e95-ec73-4bcb-94c8-3adfdc0fd94f'
+def send_feishu_msg(url,msg):
+    """
+    Todo: 给飞书机器人发消息
+    Arge:
+        url:机器人的url
+        msg:信息内容
+    """
+    headers = {
+    'Content-Type': 'application/json'
+    }
+    data = {"msg_type": "text","content": {"text":msg}
+    }
+    post_data = json.dumps(data)
+    res = requests.post(url=url, data=post_data, headers=headers)
 
-
-	n = 1
-	num = len(stock_list)
-	for i in stock_list:
-		print(f"当前正在下载{n}/{num}")
-		
-		download_history_data(i,period,start_date, end_date)
-		n += 1
-	print("下载任务结束")
