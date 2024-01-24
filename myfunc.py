@@ -1038,7 +1038,7 @@ def get_resid(s1,s2):
     else:
         return pd.Series(np.nan,index=s1.index)
     
-def get_all_symbol_dict(all_code_list) -> list:
+def get_all_symbol_code(all_code_list) -> list:
     """
     ToDo : 筛选出list里的期货代码
 
