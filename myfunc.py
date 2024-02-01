@@ -1170,17 +1170,14 @@ def get_financial_futures_code_from_index(index_code:str) -> list:
     Retuen:
         list: 对应期货合约列表
     """
-    # financial_futures = xtdata.get_stock_list_in_sector("中金所")
-    # future_list = []
-    # pattern = r'^[a-zA-Z]{1,2}\d{3,4}\.[A-Z]{2}$'
-    # # s_dict = {re.findall(r"[a-zA-Z]+",i.split(".")[0])[0] : [] for i in future_list}
-    # for i in financial_futures:
+    financial_futures = xtdata.get_stock_list_in_sector("中金所")
+    future_list = []
+    pattern = r'^[a-zA-Z]{1,2}\d{3,4}\.[A-Z]{2}$'
+    # s_dict = {re.findall(r"[a-zA-Z]+",i.split(".")[0])[0] : [] for i in future_list}
+    for i in financial_futures:
         
-    #     if re.match(pattern,i):
-    #         future_list.append(i)
-
-    from .myfunc import get_all_symbol_code
-    future_list = get_all_symbol_code(xtdata.get_stock_list_in_sector("中金所"))
+        if re.match(pattern,i):
+            future_list.append(i)
     ls = []
     for i in future_list:
         _info = xtdata._get_instrument_detail(i)
