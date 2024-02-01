@@ -1137,12 +1137,14 @@ def get_option_code(market,data_type = 0):
     return _list
 
 
-def get_option_underline_code(code:str):
+def get_option_underline_code(code:str) -> str:
     """
     注意：该函数不适用与股指期货期权
     Todo: 根据商品期权代码获取对应的具体商品期货合约
     Args:
         code:str 期权代码
+    Return:
+        对应的期货合约代码
     """
     Exchange_dict = {
     "SHFE":"SF",
