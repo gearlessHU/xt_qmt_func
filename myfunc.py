@@ -1147,11 +1147,11 @@ def get_option_underline_code(code:str) -> str:
         对应的期货合约代码
     """
     Exchange_dict = {
-    "SHFE":"SF",
-    "CZCE":"ZF",
-    "DCE":"DF",
-    "INE":"INE",
-    "GFEX":"GF"
+        "SHFE":"SF",
+        "CZCE":"ZF",
+        "DCE":"DF",
+        "INE":"INE",
+        "GFEX":"GF"
     }
     
     if code.split(".")[-1] not in [v for k,v in Exchange_dict.items()]:
@@ -1162,9 +1162,32 @@ def get_option_underline_code(code:str) -> str:
     return underline_code
         
         
+def get_financial_futures_code_from_index(index_code:str) -> list:
+    """
+    ToDo:传入指数代码，返回对应的期货合约（当前）
+    Args:
+        index_code:指数代码，如"000300.SH","000905.SH"
+    Retuen:
+        list: 对应期货合约列表
+    """
+    # financial_futures = xtdata.get_stock_list_in_sector("中金所")
+    # future_list = []
+    # pattern = r'^[a-zA-Z]{1,2}\d{3,4}\.[A-Z]{2}$'
+    # # s_dict = {re.findall(r"[a-zA-Z]+",i.split(".")[0])[0] : [] for i in future_list}
+    # for i in financial_futures:
+        
+    #     if re.match(pattern,i):
+    #         future_list.append(i)
 
-
-
+    from .myfunc import get_all_symbol_code
+    future_list = get_all_symbol_code(xtdata.get_stock_list_in_sector("中金所"))
+    ls = []
+    for i in future_list:
+        _info = xtdata._get_instrument_detail(i)
+        _index_code = _info["ExtendInfo"]['OptUndlCode'] + "." + _info["ExtendInfo"]['OptUndlMarket']
+        if _index_code == index_code:
+            ls.append(i)
+    return ls
 
 # url='https://open.feishu.cn/open-apis/bot/v2/hook/11385e95-ec73-4bcb-94c8-3adfdc0fd94f'
 def send_feishu_msg(url,msg):
