@@ -1137,6 +1137,32 @@ def get_option_code(market,data_type = 0):
     return _list
 
 
+def get_option_underline_code(code:str):
+    """
+    注意：该函数不适用与股指期货期权
+    Todo: 根据商品期权代码获取对应的具体商品期货合约
+    Args:
+        code:str 期权代码
+    """
+    Exchange_dict = {
+    "SHFE":"SF",
+    "CZCE":"ZF",
+    "DCE":"DF",
+    "INE":"INE",
+    "GFEX":"GF"
+    }
+    
+    if code.split(".")[-1] not in [v for k,v in Exchange_dict.items()]:
+        raise KeyError("此函数不支持该交易所合约")
+    info = xtdata.get_option_detail_data(code)
+    underline_code = info["OptUndlCode"] + "." + Exchange_dict[info["OptUndlMarket"]]
+
+    return underline_code
+        
+        
+
+
+
 
 # url='https://open.feishu.cn/open-apis/bot/v2/hook/11385e95-ec73-4bcb-94c8-3adfdc0fd94f'
 def send_feishu_msg(url,msg):
