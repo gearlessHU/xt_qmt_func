@@ -122,6 +122,7 @@ def my_passorder_V2(C,stock,opentype,lots,price = None,m_strRemark = ""):
     print(f'委托发送完成')
 
 
+
 #------------------期货版本--------------------------
 def my_passorder(C,Future:str,opentype:str,lots:int,price = None,m_strRemark = '系统备注'):
     '''
@@ -454,7 +455,7 @@ def optimized_rolling_min(series:pd.Series, window:int):
 
 
 
-def hhv(series,n):
+def hhv(series:pd.Series,n):
     '''
     求在n个周期内的最大值
     注意: n为0的情况下, 或当n为有效值但当前的series序列元素个数不足n个, 函数返回 NaN 序列
@@ -1076,6 +1077,7 @@ def get_option_code(market,data_type = 0):
         "SF":"过期上期所",
         "DF":"过期大商所",
         "ZF":"过期郑商所",
+        "GF":"过期广期所",
         "INE":"过期能源中心",
         "SHO":"过期上证期权",
         "SZO":"过期深证期权",
