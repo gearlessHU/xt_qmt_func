@@ -1,5 +1,5 @@
 __author__ = 'Willows'
-__version__ = "1205"
+__version__ = "0204"
 
 
 import pandas as pd
@@ -25,6 +25,36 @@ logging.basicConfig(
     filename = os.path.join(log_file_path,log_file_name + ".log"),  # 指定日志文件路径
     filemode = 'w'  # 设置写入模式，'w'表示覆盖原有日志，'a'表示追加到原有日志末尾
 )
+
+
+# --------------------数据下载---------------------------
+
+
+def my_download(stock_list,period,start_date = '', end_date = ''):
+    '''
+    用于显示下载进度
+    '''
+    if "d" in period:
+        period = "1d"
+    elif "m" in period:
+        if int(period[0]) < 5:
+            period = "1m"
+        else:
+            period = "5m"
+    elif "tick" == period:
+        pass
+    else:
+        raise KeyboardInterrupt("周期传入错误")
+
+
+    n = 1
+    num = len(stock_list)
+    for i in stock_list:
+        print(f"当前正在下载{n}/{num}")
+
+        xtdata.download_history_data(i,period,start_date, end_date)
+        n += 1
+    print("下载任务结束")
 
 
 # --------------------股票版本------------------------------
