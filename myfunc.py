@@ -262,7 +262,13 @@ def get_Future_holdings(accid,symbol = None):
         symbol: 品种，不填默认返会全部持仓
             
     return:
-        {股票名:{'手数':int,"持仓成本":float,'浮动盈亏':float,"可用余额":int}}
+        不指定symbol的情况下
+
+            {标的代码:{'多头数量':int,"空头数量":int,'多头成本':float,"空头成本":float,"净持仓":int, "浮动盈亏":float, "保证金占用":float}}
+
+        指定symbol的情况下
+        
+            {'多头数量':int,"空头数量":int,'多头成本':float,"空头成本":float,"净持仓":int, "浮动盈亏":float, "保证金占用":float}
     '''
     datatype = "FUTURE"
     
