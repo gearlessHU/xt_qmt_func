@@ -1,5 +1,5 @@
 __author__ = 'Willows'
-__version__ = "0204"
+__version__ = "0321"
 
 
 import pandas as pd
@@ -267,7 +267,7 @@ def get_Future_holdings(accid,symbol = None):
             {标的代码:{'多头数量':int,"空头数量":int,'多头成本':float,"空头成本":float,"净持仓":int, "浮动盈亏":float, "保证金占用":float}}
 
         指定symbol的情况下
-        
+
             {'多头数量':int,"空头数量":int,'多头成本':float,"空头成本":float,"净持仓":int, "浮动盈亏":float, "保证金占用":float}
     '''
     datatype = "FUTURE"
@@ -693,6 +693,12 @@ def KDJ(close:pd.DataFrame, high:pd.DataFrame, low:pd.DataFrame, N = 9, M1 = 3, 
     J=K*3-D*2
     
     return K, D, J
+
+def MACD(close:pd.DataFrame, short = 12, long = 26, M = 9):
+    DIF = ema(close,short) - ema(close,long)
+    DEA = ema(DIF,M)
+    return DIF.round(3), DEA.round(3)
+
 
 
 def qrr_rate(volume_df:pd.DataFrame) -> pd.DataFrame:
