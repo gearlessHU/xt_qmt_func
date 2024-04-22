@@ -1,5 +1,5 @@
 __author__ = 'Willows'
-__version__ = "0321"
+__version__ = "0204"
 
 
 import pandas as pd
@@ -14,6 +14,9 @@ import logging
 from collections import deque
 import json
 import requests
+
+
+
 
 # --------------------log记录程序---------------------------
 log_file_path = ""
@@ -393,6 +396,7 @@ def get_account(accid,datatype):
             "手续费":obj.m_dCommission,
             "持仓盈亏":obj.m_dPositionProfit
         }
+    return Account_dict
 
 
 def get_order(accID, datatype, symbol = None):
@@ -671,9 +675,15 @@ def REF(S, N=1):       #对序列整体下移动N,返回序列(shift后会产生
     return pd.Series(S).shift(N)  
     
 def EMA(S,N):         #指数移动平均,为了精度 S>4*N  EMA至少需要120周期       
+    """
+    传Series计算ema的版本
+    """
     return pd.Series(S).ewm(span=N, adjust=False).mean()    
     
-def ema(df:pd.DataFrame,N):                
+def ema(df:pd.DataFrame,N):
+    """
+    传df计算ema的版本
+    """                
     return df.ewm(span=N, adjust=False).mean()  
 
 
@@ -883,6 +893,8 @@ def get_st_df(df:pd.DataFrame,data = False) -> pd.DataFrame:
                 df1.loc[time1:time2,i] = data
     return df1
 
+
+
 def get_st_series(s:pd.Series) -> pd.Series:
     """
     Args:
@@ -896,8 +908,27 @@ def get_st_series(s:pd.Series) -> pd.Series:
             time1 = st_data[0]
             time2 = st_data[1]
             s.loc[time1:time2] = False
+    
     return s
     
+def check_date_status(stock_code,date_str):
+    """
+    ToDo:
+        检查给定日期是否在ST或*ST的日期范围内
+    Args:
+        stock_code: 股票代码
+        date_str: 要检查的日期，格式为"YYYYMMDD"
+    Return: 
+        找到的状态('ST'或'*ST')，如果未找到，返回None
+    """
+    data = get_st_status(stock_code)
+    # 遍历字典中的每个状态和对应的日期范围列表
+    for status, ranges in data.items():
+        for start_date, end_date in ranges:
+            # 检查给定的日期是否在当前的日期范围内
+            if start_date <= date_str <= end_date:
+                return status  # 返回找到的状态
+    return None  # 如果未找到，返回None    
 
 def init_data_qmt(C,stock_list:list,period:str,count = -1):
     '''
@@ -914,7 +945,7 @@ def init_data_qmt(C,stock_list:list,period:str,count = -1):
 
     return _dict,df
 
-def init_data_xt(stock_list:list,period:str,count = -1):
+def init_data_xt(stock_list:list,period:str,count = -1,dividend_type: str = 'none'):
     '''
     Args:
         stock_list:股票代码表
@@ -923,7 +954,7 @@ def init_data_xt(stock_list:list,period:str,count = -1):
     Return: 
         _dict,df
     '''
-    _dict = xtdata.get_market_data_ex_ori([],stock_list,period = period, count=count)
+    _dict = xtdata.get_market_data_ex_ori([],stock_list,period = period, count=count,dividend_type=dividend_type)
     _dateList = _dict[list(_dict.keys())[0]]["stime"]
     df = pd.DataFrame(index = _dateList , columns = list(_dict.keys()))
 
@@ -1098,7 +1129,7 @@ def get_all_symbol_code(all_code_list) -> list:
             future_list.append(i)
     return future_list
 
-def get_option_code(market,data_type = 0):
+def get_option_code_from_sector(market,data_type = 0):
 
     '''
 
@@ -1177,6 +1208,22 @@ def get_option_code(market,data_type = 0):
             _list.append(i)
     # _list =[i for i in all_list if re.match(pattern, i)]
     return _list
+
+def get_option_code_from_future_code(code):
+    """
+    ToDo:
+        取出期货合约对应的期权合约
+    Args:
+        code(str):期货代码，例"rb2410.SF"
+    Return:
+        List:期货标的对应期权合约的列表
+    """
+    ls = []
+    for i in get_option_code_from_sector(code[-2:]):
+        info = xtdata.get_option_detail_data(i)
+        if info["OptUndlCodeFull"] == code:
+            ls.append(i)
+    return ls
 
 
 def get_option_underline_code(code:str) -> str:
