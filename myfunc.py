@@ -1,5 +1,5 @@
 __author__ = 'Willows'
-__version__ = "0422"
+__version__ = "0204"
 
 
 import pandas as pd
@@ -19,15 +19,21 @@ import requests
 
 
 # --------------------log记录程序---------------------------
+from loguru import logger
+import os
+
+# 设置日志文件路径和名称
 log_file_path = ""
-log_file_name = ""
-logging.basicConfig(
-    level = logging.INFO,
-    format = '%(asctime)s %(levelname)s: %(message)s',  # 设置日志格式
-    datefmt = '%Y-%m-%d %H:%M:%S',  # 设置日期时间格式
-    filename = os.path.join(log_file_path,log_file_name + ".log"),  # 指定日志文件路径
-    filemode = 'w'  # 设置写入模式，'w'表示覆盖原有日志，'a'表示追加到原有日志末尾
-)
+log_file_name = "my_log.log"
+log_file = os.path.join(log_file_path, log_file_name)
+mode = "w" # w为覆盖写入，a为追加写入
+# 配置 loguru 日志记录
+logger.add(log_file, format="{time:YYYY-MM-DD HH:mm:ss.SSS} {level} {message}", level="INFO",mode=mode)
+
+# 记录日志示例
+# logger.info("This is an info message")
+# logger.warning("This is a warning message")
+# logger.error("This is an error message")
 
 
 # --------------------数据下载---------------------------
@@ -143,7 +149,7 @@ def my_passorder_V2(C,stock,opentype,lots,price = None,m_strRemark = ""):
 
     #holdings = get_holdings(C.accID,'stock')
     opentype = opentype #买卖方向
-    op =1102 if opentype == "buy" else 1101 #股数
+    op =1101 if opentype == "buy" else 1101 #股数
     opType = 23 if opentype == 'buy' else 24# 若不为'sell' 则为buy
     volumex = lots
     price = 0 if not price else price # price参数必须存在
@@ -153,7 +159,6 @@ def my_passorder_V2(C,stock,opentype,lots,price = None,m_strRemark = ""):
     passorder(opType, op, C.accID,stock, prType, price, volumex,'交易注释',1,m_strRemark, C)
     waiting_dict[stock] = m_strRemark
     print(f'委托发送完成')
-
 
 
 #------------------期货版本--------------------------
@@ -259,7 +264,7 @@ def get_holding_v2(accID,datatype,order,symbol = None):
 
 def get_Future_holdings(accid,symbol = None):
     '''
-    针对期货返回持仓的奇葩结构做处理
+    针对期货返回持仓的结构做处理
     Arg:
         accondid:账户id
         symbol: 品种，不填默认返会全部持仓
@@ -385,18 +390,19 @@ def get_trade(accid,datatype,symbol = None):
         return TradeInfo_dict
 
 
-def get_account(accid,datatype):
-    Account_dict = {}
-    resultlist = get_trade_detail_data(accid,datatype,"ACCOUNT")
+def get_stock_account(accid):
+    
+    resultlist = get_trade_detail_data(accid,"STOCK","ACCOUNT")
     for obj in resultlist:
-        Account_dict[obj.m_strAccountID] = {
+        if obj.m_strAccountID == accid:
+            res =  {
             "冻结金额":obj.m_dFrozenCash,
             "总资产":obj.m_dBalance,
             "可用金额":obj.m_dAvailable,
             "手续费":obj.m_dCommission,
             "持仓盈亏":obj.m_dPositionProfit
         }
-    return Account_dict
+    return res
 
 
 def get_order(accID, datatype, symbol = None):
@@ -1111,7 +1117,7 @@ def get_resid(s1,s2):
         return result.resid
     else:
         return pd.Series(np.nan,index=s1.index)
-    
+
 def get_all_symbol_code(all_code_list) -> list:
     """
     ToDo : 筛选出list里的期货代码
@@ -1121,13 +1127,48 @@ def get_all_symbol_code(all_code_list) -> list:
     """
     s_dict = {}
     future_list = []
-    pattern = r'^[a-zA-Z]{1,2}\d{3,4}\.[A-Z]{2}$'
+    
+    pattern1 = r'^[a-zA-Z]{1,2}\d{4}\.[A-Z]{2}$'
+    pattern2 = r'^[a-zA-Z]{1,2}\d{3}\.[A-Z]{2}$'
     # s_dict = {re.findall(r"[a-zA-Z]+",i.split(".")[0])[0] : [] for i in future_list}
     for i in all_code_list:
-        
+        pattern = pattern2 if i[-2:] == "ZF" else pattern1
         if re.match(pattern,i):
             future_list.append(i)
     return future_list
+
+def get_symbol_option(symbol:str,optype:str = ""):
+    """
+    ToDo:获取商品期货对应的商品期权
+
+    Args:
+        symbol (str): 商品期货代码
+        optype (str, optional): 'CALL' or 'PUT'， 默认两边都取.
+
+    Returns:
+        _type_ (list): 对应的商品期权
+    """
+    _exc = symbol.split(".")[1]
+    optype = optype.upper()
+    _exchange = {
+        "SF":"上期所期权",
+        "ZF":"郑商所期权",
+        "DF":"大商所期权",
+        "GF":"广期所期权",
+        "INE":"能源中心期权",
+    }
+    sector_name = _exchange.get(_exc,False)
+    if not sector_name:
+        raise KeyError(f"{symbol}交易所错误")
+    if optype not in ["CALL","PUT",""]:
+        raise KeyError(f"{optype}期权类型错误")
+    ls = xtdata.get_stock_list_in_sector(sector_name)
+    if not optype:
+        res = [i for i in ls if xtdata.get_option_detail_data(i)["OptUndlCodeFull"] == symbol]
+    else:
+        res = [i for i in ls if xtdata.get_option_detail_data(i)["OptUndlCodeFull"] == symbol and xtdata.get_option_detail_data(i)["optType"] == optype]
+    return res
+
 
 def get_option_code_from_sector(market,data_type = 0):
 
