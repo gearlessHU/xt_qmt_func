@@ -936,6 +936,36 @@ def check_date_status(stock_code,date_str):
                 return status  # 返回找到的状态
     return None  # 如果未找到，返回None    
 
+def get_next_holidays_diff(target_date:str):
+    """
+    获取指定日期到下一个节假日的天数,
+    target_date格式为'%Y%m%d
+    '"""
+    hls = xtdata.get_holidays()
+    hls_d = [datetime.datetime.strptime(i,"%Y%m%d") for i in hls]
+    diff = []
+    for i in range(len(hls_d)-1):
+        if i == 0:
+            #print(hls_d[0])
+            diff.append(hls_d[0])
+            continue
+        if (hls_d[i + 1] - hls_d[i]).days > 1:
+            #print(hls_d[i+1])
+            diff.append(hls_d[i+1])
+    target_date = datetime.datetime.strptime(target_date,"%Y%m%d")
+    for d in diff:
+        if target_date < diff[0] or target_date > diff[-1]:
+            raise KeyError(f"{target_date}超出节假日范围")
+        if target_date >= d:
+            continue
+        else:
+            date_diff = (d - target_date).days
+            break
+    return(date_diff)
+        
+
+
+
 def init_data_qmt(C,stock_list:list,period:str,count = -1):
     '''
     Args:
