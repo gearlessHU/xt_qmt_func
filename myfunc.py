@@ -1,5 +1,5 @@
 __author__ = 'Willows'
-__version__ = "0722"
+__version__ = "250312"
 
 
 import pandas as pd
@@ -39,14 +39,17 @@ logger.add(log_file, format="{time:YYYY-MM-DD HH:mm:ss.SSS} {level} {message}", 
 # --------------------数据下载---------------------------
 
 
-def my_download(stock_list,period,start_date = '', end_date = ''):
+def my_download(stock_list:list,period:str,start_date = '', end_date = ''):
     '''
     用于显示下载进度
     '''
+    import string
+    
     if "d" in period:
         period = "1d"
     elif "m" in period:
-        if int(period[0]) < 5:
+        numb = period.translate(str.maketrans("", "", string.ascii_letters))
+        if int(numb) < 5:
             period = "1m"
         else:
             period = "5m"
@@ -59,15 +62,15 @@ def my_download(stock_list,period,start_date = '', end_date = ''):
     n = 1
     num = len(stock_list)
     for i in stock_list:
-        print(f"当前正在下载{n}/{num}")
-
+        print(f"当前正在下载 {period} {n}/{num}")
+        
         xtdata.download_history_data(i,period,start_date, end_date)
         n += 1
     print("下载任务结束")
 
 
 # --------------------股票版本------------------------------
-def my_passorder(C,stock,opentype,lots,price = None,m_strRemark = '系统备注'):
+def my_passorder(C,account,stock,opentype,lots,price = None,m_strRemark = '系统备注'):
     '''
     
     Args:
@@ -90,7 +93,7 @@ def my_passorder(C,stock,opentype,lots,price = None,m_strRemark = '系统备注'
     prType = 14 if not price else 11 # 若不指定价格，则默认按对手价下单
     print(f'{stock} 新委托信息 方向{opentype} 价格{price} 量{volumex}')
     #print(f"opType:{opType} , op:{op} , C.accID{C.accID} , stock{stock} , prType{prType} , price{price} , volumex{volumex}")
-    passorder(opType, op, C.accID,stock, prType, price, volumex,'交易注释',1,'{}'.format(m_strRemark), C)
+    passorder(opType, op, account, stock, prType, price, volumex,'交易注释',1,'{}'.format(m_strRemark), C)
     print(f'委托发送完成')
 
 
@@ -117,7 +120,7 @@ def refresh_waiting_dict(accID):
         del waiting_dict[stock]
 
 
-def my_passorder_V2(C,stock,opentype,lots,price = None,m_strRemark = ""):
+def my_passorder_V2(C,account,stock,opentype,lots,price = None,m_strRemark = ""):
     '''
     
     ToDO: 需要配合refresh_waiting_dict()使用
@@ -156,13 +159,13 @@ def my_passorder_V2(C,stock,opentype,lots,price = None,m_strRemark = ""):
     prType = 14 if not price else 11 # 若不指定价格，则默认按对手价下单
     print(f'{stock} 新委托信息 方向{opentype} 价格{price} 量{volumex}')
     #print(f"opType:{opType} , op:{op} , C.accID{C.accID} , stock{stock} , prType{prType} , price{price} , volumex{volumex}")
-    passorder(opType, op, C.accID,stock, prType, price, volumex,'交易注释',1,m_strRemark, C)
+    passorder(opType, op, account ,stock, prType, price, volumex,'交易注释',1,m_strRemark, C)
     waiting_dict[stock] = m_strRemark
     print(f'委托发送完成')
 
 
 #------------------期货版本--------------------------
-def my_passorder(C,Future:str,opentype:str,lots:int,price = None,m_strRemark = '系统备注'):
+def my_passorder(C,account,Future:str,opentype:str,lots:int,price = None,m_strRemark = '系统备注'):
     '''
     
     Args:
@@ -202,8 +205,10 @@ def my_passorder(C,Future:str,opentype:str,lots:int,price = None,m_strRemark = '
 
     print(f'{Future} 新委托信息 方向{opentype} 价格{price} 量{volumex}')
     #print(f"opType:{opType} , op:{op} , C.accID{C.accID} , stock{stock} , prType{prType} , price{price} , volumex{volumex}")
-    passorder(opType, op, C.accID,Future, prType, price, volumex,'交易注释',1,'{}'.format(m_strRemark), C)
+    passorder(opType, op, account,Future, prType, price, volumex,'交易注释',1,'{}'.format(m_strRemark), C)
     print(f'委托发送完成')
+
+
 
 
 def get_stock_holdings(accid,symbol = None):
@@ -390,19 +395,19 @@ def get_trade(accid,datatype,symbol = None):
         return TradeInfo_dict
 
 
-def get_stock_account(accid):
+# def get_stock_account(accid):
     
-    resultlist = get_trade_detail_data(accid,"STOCK","ACCOUNT")
-    for obj in resultlist:
-        if obj.m_strAccountID == accid:
-            res =  {
-            "冻结金额":obj.m_dFrozenCash,
-            "总资产":obj.m_dBalance,
-            "可用金额":obj.m_dAvailable,
-            "手续费":obj.m_dCommission,
-            "持仓盈亏":obj.m_dPositionProfit
-        }
-    return res
+#     resultlist = get_trade_detail_data(accid,"STOCK","ACCOUNT")
+#     for obj in resultlist:
+#         if obj.m_strAccountID == accid:
+#             res =  {
+#             "冻结金额":obj.m_dFrozenCash,
+#             "总资产":obj.m_dBalance,
+#             "可用金额":obj.m_dAvailable,
+#             "手续费":obj.m_dCommission,
+#             "持仓盈亏":obj.m_dPositionProfit
+#         }
+#     return res
 
 
 def get_order(accID, datatype, symbol = None):
@@ -461,6 +466,119 @@ def get_order_v2(accID,datatype, order, symbol = None):
     else:
         return OrderInfo_dict
 
+## xtquant 交易相关函数## 
+
+def inster_stock_order(account, stock_code, optype, lots, price = -1, remark = "", inster_type = "cash"):
+    
+    if "waiting_dict" not in globals().keys():
+        global waiting_dict
+        waiting_dict = {}
+    
+    if stock_code in waiting_dict:
+        logger.info(f"{stock_code} 未查到或存在未撤回委托 {waiting_dict[stock_code]} 暂停后续报单")
+        return False
+    
+    
+    if optype == "buy":
+        if inster_type == "cash":
+            optype = xtconstant.CREDIT_BUY
+        else:
+            optype = xtconstant.CREDIT_FIN_BUY
+    else:
+        optype = xtconstant.CREDIT_SELL
+        
+    if remark == "":
+        dateNow = datetime.datetime.now()
+        dateNow = dateNow.hour * 3600 + dateNow.minute * 60 + dateNow.second
+        remark = f"{stock_code}_{optype}_{dateNow}"
+    lots = int(lots)
+    price_type = xtconstant.LATEST_PRICE if not price  else xtconstant.FIX_PRICE
+    xt_trade.order_stock_async(account, stock_code, optype, lots, price_type, price, order_remark=remark)
+    logger.info(f"inster_order -- stock:{stock_code},optype:{optype},lots:{lots},price:{price},order_remark:{remark}")
+    waiting_dict[stock_code] = remark
+
+
+
+def query_stock_holding(account):
+    """查询股票持仓
+
+    Args:
+        account (_type_): 股票账户类
+
+    Returns:
+    stock:{
+        "volume":obj.volume,
+        "can_use_volume":obj.can_use_volume,
+        "open_price":obj.open_price,
+        "market_value":obj.market_value,
+        "yesterday_volume":obj.yesterday_volume,
+        "avg_price":obj.avg_price
+        
+    """
+    positions = api.query_stock_positions(account)
+    Position_info = {}
+    for obj in positions:
+        Position_info[obj.stock_code]= {
+            "volume":obj.volume,
+            "can_use_volume":obj.can_use_volume,
+            "open_price":obj.open_price,
+            "market_value":obj.market_value,
+            "yesterday_volume":obj.yesterday_volume,
+            "avg_price":obj.avg_price
+        }
+    return Position_info
+
+def query_stock_order_info(account) -> dict :
+    """
+    返回的结构是{stock:{order_sysID:{order_info...}}}
+    """
+    order = api.query_stock_orders(account)
+    Order_info = {}
+    for obj in order:
+        stock = obj.stock_code
+        Order_info.setdefault(stock, {})
+        order_time = obj.order_time # 委托时间
+        order_type = obj.order_type # 委托方向判断
+        order_remark = obj.order_remark # 投资备注
+        order_volume = obj.order_volume # 委托量
+        volume_total= order_volume - obj.traded_volume # 剩余委托量
+        order_status = obj.order_status #委托状态
+        limit_price = obj.price # 委托价格
+        order_sysID = obj.order_sysid # 委托编号
+        Order_info[stock][order_sysID] = {
+            "order_time":order_time, # 委托时间
+            "order_volume":order_volume,# 委托量
+            "volume_total":volume_total,# 剩余委托量
+            "order_status":order_status,#委托状态
+            "order_remark":order_remark, # 投资备注
+            "order_type":order_type, # 成交方向判断
+            "limit_price":limit_price
+        }
+    return Order_info
+
+def query_account_info(account:StockAccount) -> dict:
+    accInfo = api.query_stock_orders(account)
+    account_info = {}
+    
+    for obj in accInfo:
+        account_type = obj.account_type # 账号类型
+        account_id = obj.account_id # 资金账号
+        cash = obj.cash # 可用金额
+        frozen_cash = obj.frozen_cash # 冻结金额
+        market_value = obj.market_value # 持仓市值
+        total_asset = obj.total_asset # 总资产
+        risk_rate = (market_value / total_asset) *100 # 风险度 %
+        
+        account_info[account_id] = {
+            "account_type":account_type,
+            "account_id":account_id,
+            "cash":cash,
+            "frozen_cash":frozen_cash,
+            "market_value":market_value,
+            "total_asset":total_asset,
+            "risk_rate":risk_rate
+        }
+    return account_info
 
 
 
