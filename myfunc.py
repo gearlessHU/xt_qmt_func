@@ -7,7 +7,8 @@ import numpy as np
 import os
 import re
 import datetime
-from xtquant import xtdata
+from xtquant import xtdata, xttrader
+from xtquant.xttype import StockAccount
 import pickle
 from typing import Union, List, Any, Optional, Coroutine, Callable, Tuple, Dict
 import logging
